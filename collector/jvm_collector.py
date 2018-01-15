@@ -11,18 +11,20 @@ from config.mysql import conn
 JDK_HOME = "/shiheng/sys/jdk/"
 apps = [
     {
-        'app_name': 'jiaoyi',
-        'server_home': '/shiheng/sys/jetty_trade/',
-        'pid_file': '/shiheng/sys/jetty_trade/run/jetty.pid',
-        'ip': '39.108.195.114',
+        'app_name': 'trade2',
+        'server_home': '/shiheng/sys/jetty/',
+        'pid_file': '/shiheng/sys/jetty/run/jetty.pid',
+        'ip': '39.108.237.190',
         'collect_gc': True,
-        'collect_capacity': False
+        'collect_capacity': False,
+        'collect_thread_count': True
     }
 ]
 
 SHELL_COMMAND_PID = 'cat %s'
 SHELL_COMMAND_CAPACITY = JDK_HOME + 'bin/jstat -gccapacity %s'
 SHELL_COMMAND_GC = JDK_HOME + 'bin/jstat -gc %s'
+SHELL_COMMAND_THREAD = JDK_HOME + 'bin/jstack %s | grep tid= | wc -l'
 
 def collect_jvm_pid(app):
     pid_file = app.get('pid_file')
@@ -109,8 +111,26 @@ def collect_jvm_gc(app, pid):
         'ip': app.get('ip')
     }
 
+def collect_jvm_thread_count(app, pid):
+    '''
+    jstat -gc pid
+    '''
+    app_name = app.get('app_name')
+    command = SHELL_COMMAND_THREAD % pid
+    output = os.popen(command)
+    num = output.readlines()[0]
+    thread_count = int(num.strip())
+    stime = datetime.now()
 
-def push_data_to_mysql(gc_data, capacity_data):
+    return {
+        'time': stime.strftime("%Y-%m-%d %H:%M:%S"),
+        'app': app_name,
+        'count': thread_count,
+        'ip': app.get('ip')
+    }
+
+
+def push_data_to_mysql(gc_data, capacity_data, thread_count_data):
     cur = conn.cursor()
     try:
         if capacity_data:
@@ -163,6 +183,13 @@ def push_data_to_mysql(gc_data, capacity_data):
                        )]
             cur.executemany(sql,values)
 
+        if thread_count_data:
+            thread_sql = '''insert into jvm_thread_count(time, app, count, ip)
+                    values(%s, %s, %s, %s) ON DUPLICATE KEY
+                    UPDATE time=VALUES(time) and app=VALUES(app) and ip=VALUES(ip)'''
+            thread_values = [(thread_count_data.get('time'), thread_count_data.get('app'), int(thread_count_data.get('count')), thread_count_data.get('ip'))]
+            cur.executemany(thread_sql, thread_values)
+
     except Exception,ex:
         print ex
         return False
@@ -179,12 +206,15 @@ def collect_data():
         pid = collect_jvm_pid(app)
         collect_gc = app.get('collect_gc')
         collect_capacity = app.get('collect_capacity')
-        j_capacity, j_gc = None, None
+        collect_thread_count = app.get('collect_thread_count')
+
+        j_capacity, j_gc, j_thread = None, None, None
         if collect_capacity:
             j_capacity = collect_jvm_capacity(app, pid)
-
         if collect_gc:
             j_gc = collect_jvm_gc(app, pid)
+        if collect_thread_count:
+            j_thread = collect_jvm_thread_count(app, pid)
 
-        push_data_to_mysql(j_gc, j_capacity)
+        push_data_to_mysql(j_gc, j_capacity, j_thread)
 
