@@ -1,0 +1,19 @@
+
+## 应用异常日志数量统计任务
+* * * * * python /shiheng/sys/eyegla/task/collect_error_task.py >> /tmp/err_num_collector.log
+
+## nginx 统计任务
+* * * * * python /shiheng/sys/eyegla/task/collect_nginx_task.py >> /tmp/ngixn_collector.log
+
+## jvm 统计任务 , 10s一次
+* * * * * python /shiheng/sys/eyegla/task/collect_jvm_task.py >> /tmp/jvm_collector.log
+* * * * * sleep 10; python /shiheng/sys/eyegla/task/collect_jvm_task.py >> /tmp/jvm_collector.log
+* * * * * sleep 20; python /shiheng/sys/eyegla/task/collect_jvm_task.py >> /tmp/jvm_collector.log
+* * * * * sleep 30; python /shiheng/sys/eyegla/task/collect_jvm_task.py >> /tmp/jvm_collector.log
+* * * * * sleep 40; python /shiheng/sys/eyegla/task/collect_jvm_task.py >> /tmp/jvm_collector.log
+* * * * * sleep 50; python /shiheng/sys/eyegla/task/collect_jvm_task.py >> /tmp/jvm_collector.log
+
+## nginx 日志切割
+0 0 * * * /bin/bash /shiheng/sys/eyegla/scripts/cut-nginx-log.sh
+
+

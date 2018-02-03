@@ -8,19 +8,21 @@ import time
 import datetime
 from config.mysql import conn
 
+apps = [
+    {
+        'app': 'trade',
+        'ip': '39.108.237.190',
+        'log_file': '/shiheng/logs/app/trade/error.log'
+    },
+    {
+        'app': 'trade2',
+        'ip': '39.108.237.190',
+        'log_file': '/shiheng/logs/app/trade2/error.log'
+    }
+]
 
-TRADE = {
-    'app': 'trade',
-    'log_file': '/shiheng/logs/app/trade/error.log'
-}
-
-TRADE2 = {
-    'app': 'trade2',
-    'log_file': '/shiheng/logs/app/trade2/error.log'
-}
 
 SHELL_COMMAND = 'grep "%s" %s | wc -l'
-
 
 def collect_trade_num_by_key(app, key):
     '''
@@ -29,6 +31,7 @@ def collect_trade_num_by_key(app, key):
     '''
     app_name = app.get('app')
     log_file = app.get('log_file')
+    ip = app.get('ip')
 
     command = SHELL_COMMAND % (key, log_file)
 
@@ -41,27 +44,8 @@ def collect_trade_num_by_key(app, key):
         'time': key +':00',
         'app': app_name,
         'err_num': err_num,
-        'ip': '39.108.237.190'
+        'ip': ip
     }
-
-def collect_data():
-
-    now = datetime.datetime.now()
-    ## 统计上一分钟
-    first_min = now - datetime.timedelta(minutes=1)
-    time_str = first_min.strftime('%Y-%m-%d %H:%M')
-
-    collect_data_by_date(time_str)
-
-def collect_data_by_date(time):
-    '''
-    提取这一分钟的错误数
-    :param time: 'yyyy-mm-dd HH:MM'
-    :return:
-    '''
-    data1 = collect_trade_num_by_key(TRADE, time)
-    data2 = collect_trade_num_by_key(TRADE2, time)
-    push_data_to_mysql([data1, data2])
 
 def push_data_to_mysql(datas):
     cur = conn.cursor()
@@ -86,4 +70,22 @@ def push_data_to_mysql(datas):
     #print values
     return True
 
+
+def collect_data_by_date(time):
+    '''
+    提取这一分钟的错误数
+    :param time: 'yyyy-mm-dd HH:MM'
+    :return:
+    '''
+    data = [collect_trade_num_by_key(app, time) for app in apps]
+    push_data_to_mysql(data)
+
+
+def collect_data():
+    now = datetime.datetime.now()
+    ## 统计上一分钟
+    first_min = now - datetime.timedelta(minutes=1)
+    time_str = first_min.strftime('%Y-%m-%d %H:%M')
+
+    collect_data_by_date(time_str)
 
