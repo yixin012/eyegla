@@ -12,21 +12,3 @@ conn= MySQLdb.connect(
 )
 
 
-'''
-创建数据库
-
-CREATE DATABASE eyegla DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-
-CREATE TABLE `err_num` (
-  `stime` datetime NOT NULL COMMENT '时间',
-  `app` varchar(20) NOT NULL COMMENT '应用名称',
-  `num` int(11) NOT NULL default '0' COMMENT '数值',
-  `ip` varchar(20) NOT NULL DEFAULT '127.0.0.1' COMMENT 'ip',
-  PRIMARY KEY (`stime`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='异常数量';
-
-
-
-
-'''
-
