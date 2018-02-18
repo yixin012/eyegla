@@ -42,7 +42,7 @@ grep "26/Jan/2018:22:11" /shiheng/logs/nginx/access.log | grep "127.0.0.1:8080" 
 
 SHELL_COMMAND = 'grep "%s" %s | grep "%s" | wc -l'
 SHELL_COMMAND_TYPE = 'grep "%s" %s | grep "%s" | grep "%s" | wc -l'
-SHELL_COMMAND_IP = 'grep "%s" %s | grep "%s" | awk "{print $1}" | sort | uniq | wc -l'
+SHELL_COMMAND_IP = 'grep "%s" %s | grep "%s" | awk \'{print $1}\' | sort | uniq | wc -l'
 
 SHELL_COMMAND_REQUEST_TIME_AVG = "grep %s %s | grep %s | awk '{sum+=$12*1000} END {print sum/NR}'"
 
